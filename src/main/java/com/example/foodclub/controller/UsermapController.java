@@ -1,6 +1,7 @@
 package com.example.foodclub.controller;
 
 import com.example.foodclub.dto.UsermapDto;
+import com.example.foodclub.model.UserKey;
 import com.example.foodclub.model.Usermap;
 import com.example.foodclub.repository.UsermapRepository;
 import com.example.foodclub.service.FoodClubService;
@@ -43,16 +44,15 @@ class UsermapController {
     }
 
     @PutMapping("/users/{id}")
-    Usermap replaceUsermap(@RequestBody Usermap newUsermap, @PathVariable Long id) {
+    Usermap replaceUsermap(@RequestBody UsermapDto usermapDto, @PathVariable Long id) {
 
         return usermapRepository.findById(id)
                 .map(usermap -> {
-                    usermap.setPalsId(newUsermap.getPalsId());
-                    usermap.setPgrId(newUsermap.getPgrId());
-                    usermap.setWcsId(newUsermap.getWcsId());
+                    UserKey userKey = new UserKey(usermapDto.getPalsId(), usermapDto.getPgrId(), usermapDto.getWcsId());
+                    usermap.addUserKey(userKey);
                     return usermapRepository.save(usermap);
                 })
-                .orElseGet(() -> usermapRepository.save(newUsermap));
+                .orElseGet(() -> usermapRepository.save(convertToObj(usermapDto)));
     }
 
     @DeleteMapping("/users/{id}")
@@ -62,5 +62,9 @@ class UsermapController {
 
     private UsermapDto convertToDto(Usermap usermap) {
         return modelMapper.map(usermap, UsermapDto.class);
+    }
+
+    private Usermap convertToObj(UsermapDto usermapDto) {
+        return modelMapper.map(usermapDto, Usermap.class);
     }
 }

@@ -30,6 +30,8 @@ public class PurchaseRecord {
 
     private String skuName;
 
+    private int quantity;
+
     private double skuPrice;
 
 

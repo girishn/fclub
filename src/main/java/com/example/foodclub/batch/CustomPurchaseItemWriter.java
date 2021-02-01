@@ -13,17 +13,17 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class CustomPurchaseItemWriter implements ItemWriter<Purchase> {
+public class CustomPurchaseItemWriter implements ItemWriter<List<Purchase>> {
 
     @Autowired
     private FoodClubService foodClubService;
 
 
     @Override
-    public void write(List<? extends Purchase> list) throws Exception {
-        list.forEach(purchase -> {
+    public void write(List<? extends List<Purchase>> list) throws Exception {
+        list.forEach(purchases -> {
             try {
-                foodClubService.createPurchase(purchase.getUsermap().getId(), purchase);
+                foodClubService.createPurchases(purchases);
             } catch (ResourceNotFoundException e) {
                 log.info("Exception: ", e);
             }

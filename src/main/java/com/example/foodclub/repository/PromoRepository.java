@@ -1,6 +1,5 @@
 package com.example.foodclub.repository;
 
-import com.example.foodclub.model.Counter;
 import com.example.foodclub.model.Promo;
 import org.springframework.data.repository.CrudRepository;
 

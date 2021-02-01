@@ -17,11 +17,17 @@ public class RecordFieldSetMapper extends BeanWrapperFieldSetMapper<PurchaseReco
  
         purchaseRecord.setTransactionId(fieldSet.readLong(0));
         purchaseRecord.setPalsId(fieldSet.readString(1));
-        String dateString = fieldSet.readString(2);
+        purchaseRecord.setPgrId(fieldSet.readString(2));
+        String wcsIdStr = fieldSet.readString(3);
+        if (!wcsIdStr.isEmpty()) {
+            purchaseRecord.setWcsId(Long.parseLong(wcsIdStr));
+        }
+        String dateString = fieldSet.readString(4);
         purchaseRecord.setPurchaseDate(LocalDate.parse(dateString, formatter));
-        purchaseRecord.setSkuId(fieldSet.readLong(3));
-        purchaseRecord.setSkuName(fieldSet.readString(4));
-        purchaseRecord.setSkuPrice(fieldSet.readDouble(5));
+        purchaseRecord.setSkuId(fieldSet.readLong(5));
+        purchaseRecord.setSkuName(fieldSet.readString(6));
+        purchaseRecord.setQuantity(fieldSet.readInt(7));
+        purchaseRecord.setSkuPrice(fieldSet.readDouble(8));
 
         return purchaseRecord;
     }

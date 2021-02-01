@@ -1,7 +1,7 @@
 package com.example.foodclub.config;
 
 import com.example.foodclub.batch.*;
-import com.example.foodclub.model.Counter;
+import com.example.foodclub.model.FoodClubCounter;
 import com.example.foodclub.model.Purchase;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -9,7 +9,6 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
-import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
@@ -17,7 +16,6 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.batch.item.support.CompositeItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +24,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.web.client.RestTemplate;
 
 import javax.persistence.EntityManagerFactory;
-import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 public class JobConfiguration {
@@ -103,8 +101,8 @@ public class JobConfiguration {
     }
 
     @Bean
-    public JpaItemWriter<Counter> counterWriter() {
-        return new JpaItemWriterBuilder<Counter>()
+    public JpaItemWriter<FoodClubCounter> counterWriter() {
+        return new JpaItemWriterBuilder<FoodClubCounter>()
                 .entityManagerFactory(entityManagerFactory)
                 .usePersist(true)
                 .build();
@@ -113,7 +111,7 @@ public class JobConfiguration {
     @Bean
     public Step load(StepBuilderFactory stepBuilderFactory) {
         return stepBuilderFactory.get("load")
-                .<PurchaseRecord, Purchase>chunk(2)
+                .<PurchaseRecord, List<Purchase>>chunk(2)
                 .reader(reader())
                 .processor(processor())
                 .writer(customPurchaseItemWriter)

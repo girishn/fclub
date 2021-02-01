@@ -1,7 +1,7 @@
 package com.example.foodclub.repository;
 
-import com.example.foodclub.model.Counter;
+import com.example.foodclub.model.FoodClubCounter;
 import org.springframework.data.repository.CrudRepository;
 
-public interface CounterRepository extends CrudRepository<Counter, Long> {
+public interface CounterRepository extends CrudRepository<FoodClubCounter, Long> {
 }

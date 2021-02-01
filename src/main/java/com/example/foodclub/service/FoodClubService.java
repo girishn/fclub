@@ -4,12 +4,14 @@ import com.example.foodclub.error.ResourceNotFoundException;
 import com.example.foodclub.model.*;
 import com.example.foodclub.repository.*;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @AllArgsConstructor
@@ -19,13 +21,14 @@ public class FoodClubService {
 
     private final PurchaseRepository purchaseRepository;
     private final UsermapRepository usermapRepository;
+    private final UserKeyRepository userKeyRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final CounterRepository counterRepository;
     private final PromoRepository promoRepository;
 
     public void initData() {
 
-        Usermap usermap = new Usermap("213213", "123241243", 1244524L);
+        Usermap usermap = new Usermap("111", "1111", 11111L);
 
 //        Random random = new Random();
 //
@@ -38,7 +41,7 @@ public class FoodClubService {
 //        purchaseList1.forEach(purchaseRepository::save);
 //        Promo savedPromo1 = promoRepository.save(promo1);
 //
-//        purchaseList1.forEach(purchase -> purchase.setPromo(savedPromo1));
+//        purchaseList1.forEach(purchase -> purchase.addPromo(savedPromo1));
 //
 //        List<Purchase> purchaseList2 = IntStream.range(0, 5)
 //                .mapToObj(i -> new Purchase(LocalDate.now(), i, "WH sku", random.nextDouble(), usermap))
@@ -49,15 +52,26 @@ public class FoodClubService {
 //        purchaseList2.forEach(purchaseRepository::save);
 //        Promo savedPromo2 = promoRepository.save(promo2);
 //
-//        purchaseList2.forEach(purchase -> purchase.setPromo(savedPromo2));
-//
-        Enrollment enrolled = enrollmentRepository.save(new Enrollment("enrolled", LocalDate.now()));
+//        purchaseList2.forEach(purchase -> purchase.addPromo(savedPromo2));
+
+//        Enrollment enrolled = enrollmentRepository.save(new Enrollment("enrolled", LocalDate.now()));
 //        Counter counter = counterRepository.save(new Counter(1, 0));
-//
-        usermap.setEnrollment(enrolled);
-//        usermap.setCounter(counter);
+
+        FoodClubEnrollment foodClubEnrollment = new FoodClubEnrollment("enrolled", LocalDate.now(), usermap);
+        enrollmentRepository.save(foodClubEnrollment);
+        FoodClubCounter foodClubCounter = new FoodClubCounter(1, 0, usermap);
+        counterRepository.save(foodClubCounter);
 
         usermapRepository.save(usermap);
+
+        Usermap usermap1 = new Usermap("222", "2222", 22222L);
+
+        FoodClubEnrollment foodClubEnrollment1 = new FoodClubEnrollment("enrolled", LocalDate.now(), usermap1);
+        enrollmentRepository.save(foodClubEnrollment1);
+
+        usermap1.addUserKey(new UserKey("222-2", "", 22222L));
+
+        usermapRepository.save(usermap1);
     }
 
     public Usermap saveUserData(Usermap newUsermap) {
@@ -76,10 +90,11 @@ public class FoodClubService {
         return purchaseRepository.findByUsermapId(userId);
     }
 
-    public Purchase createPurchase(Long userId, Purchase purchase) throws ResourceNotFoundException {
+    @SneakyThrows
+    public Purchase createPurchase(Long userId, Purchase purchase) {
         return usermapRepository.findById(userId).map(usermap -> {
 
-            boolean createPromo = incrementPunchCount(usermap, purchase);
+            boolean createPromo = incrementPunchCount(usermap);
 
             if (createPromo && isUserEnrolled(usermap)) {
                 createPromo(usermap, purchase);
@@ -90,47 +105,59 @@ public class FoodClubService {
         }).orElseThrow(() -> new ResourceNotFoundException("user not found"));
     }
 
-    private boolean incrementPunchCount(Usermap usermap, Purchase purchase) {
+    @SneakyThrows
+    public void createPurchases(List<Purchase> purchases) throws ResourceNotFoundException {
+        purchases.forEach(purchase -> createPurchase(purchase.getUsermap().getId(), purchase));
+    }
+
+    private boolean incrementPunchCount(Usermap usermap) {
 
         boolean counterReset = false;
 
-        Counter counter = usermap.getCounter();
+        FoodClubCounter foodClubCounter = counterRepository.findById(Objects.requireNonNull(usermap.getId())).orElse(new FoodClubCounter());
 
-        if (counter == null) {
-            counter = new Counter();
-            usermap.setCounter(counter);
-        }
-
-        if (counter.getPunchCount() + 1 == 6) {
-            counter.setPunchCount(0);
+        if (foodClubCounter.getPunchCount() + 1 == 6) {
+            foodClubCounter.setPunchCount(0);
+            foodClubCounter.setResetCount(foodClubCounter.getResetCount() + 1);
             counterReset = true;
+        } else {
+            foodClubCounter.setPunchCount(foodClubCounter.getPunchCount() + 1);
         }
 
-        counter.setPunchCount(counter.getPunchCount() + 1);
-        counterRepository.save(counter);
+        foodClubCounter.setUsermap(usermap);
+        counterRepository.save(foodClubCounter);
         return counterReset;
     }
 
     private boolean isUserEnrolled(Usermap usermap) {
-        return usermap.getEnrollment() != null && "enrolled".equalsIgnoreCase(usermap.getEnrollment().getStatus());
+        FoodClubEnrollment foodClubEnrollment = enrollmentRepository.findById(usermap.getId()).orElseThrow();
+        return foodClubEnrollment != null && "enrolled".equalsIgnoreCase(foodClubEnrollment.getStatus());
     }
 
     private void createPromo(Usermap usermap, Purchase purchase) {
-        Promo promo = new Promo("$off voucher", LocalDate.now(), LocalDate.now(), "890000888234234333", "valid", usermap);
-//        promo.getPurchases().add(purchase);
+        String palsId = fetchPrimaryPalsId(usermap);
+        Promo promo = new Promo(palsId, "$off voucher", LocalDate.now(), LocalDate.now(), "890000888234234333", "valid", usermap);
+        purchase.addPromo(promo);
         promoRepository.save(promo);
     }
 
-    public Enrollment getEnrollmentByUser(Long userId) throws ResourceNotFoundException {
-        return usermapRepository.findById(userId).map(Usermap::getEnrollment).orElseThrow(() -> new ResourceNotFoundException("user not found"));
+    private String fetchPrimaryPalsId(Usermap usermap) {
+        return usermap.getUserKeys().stream()
+                .findFirst()
+                .orElseThrow()
+                .getPalsId();
     }
 
-    public Enrollment createEnrollment(Long userId, Enrollment enrollment) throws ResourceNotFoundException {
+    public FoodClubEnrollment getEnrollmentByUser(Long userId) throws ResourceNotFoundException {
+        return enrollmentRepository.findById(userId).orElseThrow();
+    }
+
+    public FoodClubEnrollment createEnrollment(Long userId, FoodClubEnrollment foodClubEnrollment) throws ResourceNotFoundException {
         return usermapRepository.findById(userId).map(usermap -> {
-            Enrollment savedEnrollment = enrollmentRepository.save(enrollment);
-            usermap.setEnrollment(savedEnrollment);
+            FoodClubEnrollment savedFoodClubEnrollment = enrollmentRepository.save(foodClubEnrollment);
+            savedFoodClubEnrollment.setUsermap(usermap);
             usermapRepository.save(usermap);
-            return savedEnrollment;
+            return savedFoodClubEnrollment;
         }).orElseThrow(() -> new ResourceNotFoundException("user not found"));
     }
 
@@ -139,10 +166,6 @@ public class FoodClubService {
     }
 
     public List<Purchase> findPurchasesByPromoId(long promoId) {
-        return purchaseRepository.findByPromoId(promoId);
-    }
-
-    public Usermap findUserByIds(String palsId, String pgrId, long wcsId) throws ResourceNotFoundException {
-        return usermapRepository.findByPalsId(palsId).orElseThrow(() -> new ResourceNotFoundException("user not found"));
+        return purchaseRepository.findAllByPromos(promoId);
     }
 }

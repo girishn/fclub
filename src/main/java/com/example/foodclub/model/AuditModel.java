@@ -8,10 +8,7 @@ import org.springframework.data.jpa.domain.AbstractPersistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.annotation.Nullable;
-import javax.persistence.EntityListeners;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -27,10 +24,12 @@ public abstract class AuditModel<PK extends Serializable> extends AbstractPersis
 
     @CreatedDate
     @Nullable
+    @Column(name = "createdDate")
     private LocalDateTime createdDate;
 
     @LastModifiedDate
     @Nullable
+    @Column(name = "lastModifiedDate")
     private LocalDateTime lastModifiedDate;
 
 }

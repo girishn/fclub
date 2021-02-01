@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.AbstractAuditable;
 import org.springframework.data.jpa.domain.AbstractPersistable;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -17,11 +16,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 @Entity
-public class Enrollment extends AuditModel<Long> {
+@Table(name = "foodClubCounter")
+public class FoodClubCounter extends AuditModel<Long> {
 
-    private String status;
+    @Column(name = "punchCount")
+    private int punchCount;
 
-    @Column(columnDefinition = "DATE")
-    private LocalDate startDate;
+    @Column(name = "resetCount")
+    private int resetCount;
+
+    @MapsId
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usermapid")
+    private Usermap usermap;
 
 }

@@ -2,7 +2,7 @@ package com.example.foodclub.controller;
 
 import com.example.foodclub.dto.EnrollmentDto;
 import com.example.foodclub.error.ResourceNotFoundException;
-import com.example.foodclub.model.Enrollment;
+import com.example.foodclub.model.FoodClubEnrollment;
 import com.example.foodclub.service.FoodClubService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +30,12 @@ public class EnrollmentController {
         return convertToDto(foodClubService.createEnrollment(userId, convertToObj(enrollmentDto)));
     }
 
-    private Enrollment convertToObj(EnrollmentDto enrollmentDto) {
-        return modelMapper.map(enrollmentDto, Enrollment.class);
+    private FoodClubEnrollment convertToObj(EnrollmentDto enrollmentDto) {
+        return modelMapper.map(enrollmentDto, FoodClubEnrollment.class);
     }
 
-    private EnrollmentDto convertToDto(Enrollment enrollment) {
-        return modelMapper.map(enrollment, EnrollmentDto.class);
+    private EnrollmentDto convertToDto(FoodClubEnrollment foodClubEnrollment) {
+        return modelMapper.map(foodClubEnrollment, EnrollmentDto.class);
     }
 
 }
